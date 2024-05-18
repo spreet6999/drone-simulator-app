@@ -4,7 +4,7 @@ import "./App.css";
 function App() {
   const [count, setCount] = useState(0);
 
-  return <div>Home</div>;
+  return <div className="h-screen">Home</div>;
 }
 
 export default App;
