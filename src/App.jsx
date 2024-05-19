@@ -8,83 +8,7 @@ import Controls from "./components/Controls";
 //* Import styles
 import "./App.css";
 
-const DEFAULT_DRONE_PATH = [
-  {
-    timestamp: 1709352565,
-    lat: 28.6315,
-    lng: 77.2167,
-  },
-  {
-    timestamp: 1715719113,
-    lat: 28.621912,
-    lng: 77.207538,
-  },
-  {
-    timestamp: 1715719120,
-    lat: 28.612323,
-    lng: 77.198376,
-  },
-  {
-    timestamp: 1715719143,
-    lat: 28.602735,
-    lng: 77.189214,
-  },
-  {
-    timestamp: 1715719147,
-    lat: 28.593147,
-    lng: 77.180051,
-  },
-  {
-    timestamp: 1715719169,
-    lat: 28.583558,
-    lng: 77.170889,
-  },
-  {
-    timestamp: 1715719167,
-    lat: 28.57397,
-    lng: 77.161727,
-  },
-  {
-    timestamp: 1715719189,
-    lat: 28.564382,
-    lng: 77.152565,
-  },
-  {
-    timestamp: 1715719192,
-    lat: 28.554793,
-    lng: 77.143403,
-  },
-  {
-    timestamp: 1715719213,
-    lat: 28.545205,
-    lng: 77.134241,
-  },
-  {
-    timestamp: 1715719313,
-    lat: 28.535617,
-    lng: 77.125078,
-  },
-  {
-    timestamp: 1715719413,
-    lat: 28.526028,
-    lng: 77.115916,
-  },
-  {
-    timestamp: 1715719513,
-    lat: 28.51644,
-    lng: 77.106754,
-  },
-  {
-    timestamp: 1715719613,
-    lat: 28.506852,
-    lng: 77.097592,
-  },
-  {
-    timestamp: 1715719713,
-    lat: 28.497263,
-    lng: 77.08843,
-  },
-];
+const DEFAULT_DRONE_PATH = [];
 
 export default function App() {
   const [dronePath, setDronePath] = useState(
@@ -97,27 +21,14 @@ export default function App() {
   const [paths, setPaths] = useState([]); // Array of drone paths
   const [currentPathIndex, setCurrentPathIndex] = useState(0);
 
-  const parseTimeSeriesData = (data = []) => {
-    if (!data || !data.length) return [];
-    const parsedData = data.map((coords) => {
-      return {
-        timestamp: coords["timestamp"],
-        lat: coords["latitude"],
-        lng: coords["longitude"],
-      };
-    });
-    return parsedData;
-  };
-
   const handleInputChange = (data) => {
-    const parsedData = parseTimeSeriesData(data);
-    setDronePath(parsedData);
-  };
+    console.log(data);
+    if (!data) return;
 
-  const handleFileChange = (file) => {
-    const reader = new FileReader();
-    reader.onload = (e) => handleInputChange(e.target.result);
-    reader.readAsText(file);
+    // Sorting data based on timestamp because we are then using 0 index as our first point to start with
+    data?.sort((a, b) => a.timestamp - b.timestamp);
+    setDronePath(data);
+    if (isSimulating) setIsSimulating(false);
   };
 
   const onStartSimulation = () => {
@@ -130,27 +41,37 @@ export default function App() {
 
   useEffect(() => {
     if (isSimulating && dronePath.length > 1) {
-      const simulateMovement = setInterval(() => {
+      var simulateMovement = setInterval(() => {
         if (!isSimulating) return clearInterval(simulateMovement);
         setDronePath(dronePath.filter((_, index) => index !== 0));
       }, 1000 / simulationSpeed);
 
       return () => clearInterval(simulateMovement);
     }
+    if (isSimulating && dronePath.length === 1) {
+      setIsSimulating(false);
+    }
+    return () => clearInterval(simulateMovement);
   }, [isSimulating, dronePath, simulationSpeed]);
 
   return (
     <div className="flex items-center gap-2">
       <section className="flex-col justify-center w-[30%] mx-auto">
-        <Input
-          onInputChange={handleInputChange}
-          onFileChange={handleFileChange}
-        />
+        <p className="text-right w-full m-0 ml-auto font-bold">
+          <span
+            className="cursor-pointer"
+            onClick={() => window.location.reload()}
+          >
+            Reset
+          </span>
+        </p>
+        <Input onInputChange={handleInputChange} />
         {dronePath?.length > 0 && (
           <Controls
             isSimulating={isSimulating}
             onStart={onStartSimulation}
             onPause={onPauseSimulation}
+            isDisabled={dronePath.length <= 1}
           />
         )}
       </section>
